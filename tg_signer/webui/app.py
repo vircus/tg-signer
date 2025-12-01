@@ -114,6 +114,7 @@ class BaseConfigBlock:
                     with_input=True,
                     on_change=self.load_current,
                 ).classes("min-w-[240px]")
+                ui.button("重置", on_click=self.clear_selection).props("outline")
                 self.name_input = ui.input(
                     label="保存为/新建名称",
                     placeholder="my_task",
@@ -144,6 +145,12 @@ class BaseConfigBlock:
                 ui.button("删除", color="negative", on_click=self.delete_current)
             self.setup_footer()
 
+    def clear_selection(self) -> None:
+        self.select.value = None
+        self.name_input.value = ""
+        self.fill_template()
+        self.selected_name["value"] = ""
+
     def setup_toolbar(self):
         """Override to add more buttons to the top toolbar"""
         pass
@@ -163,7 +170,6 @@ class BaseConfigBlock:
     def load_current(self) -> None:
         target = self.select.value
         if not target:
-            ui.notify("请先选择配置", type="warning")
             return
         try:
             entry = load_config(self.kind, target, workdir=state.workdir)
@@ -268,7 +274,15 @@ class SignerBlock(BaseConfigBlock):
             if self.select.value:
                 self.load_current()
 
-        wizard = InteractiveSignerConfig(state.workdir, on_complete=on_complete)
+        initial_config = self.editor.properties["content"].get("json")
+        initial_name = self.name_input.value or self.select.value or ""
+
+        wizard = InteractiveSignerConfig(
+            state.workdir,
+            on_complete=on_complete,
+            initial_config=initial_config,
+            initial_name=initial_name,
+        )
         wizard.open()
 
 
@@ -293,6 +307,60 @@ def user_info_block() -> Callable[[], None]:
                 with ui.expansion(header, icon="person"):
                     ui.label(f"文件: {entry.path}")
                     ui.code(pretty_json(entry.data), language="json").classes("w-full")
+
+                    if entry.latest_chats:
+                        ui.separator().classes("my-2")
+                        ui.label(f"最近聊天 ({len(entry.latest_chats)})").classes(
+                            "font-semibold"
+                        )
+
+                        chat_rows = []
+                        for chat in entry.latest_chats:
+                            chat_rows.append(
+                                {
+                                    "id": chat.get("id"),
+                                    "title": chat.get("title")
+                                    or chat.get("first_name")
+                                    or "N/A",
+                                    "type": chat.get("type"),
+                                    "username": chat.get("username") or "",
+                                }
+                            )
+
+                        ui.table(
+                            columns=[
+                                {
+                                    "name": "id",
+                                    "label": "ID",
+                                    "field": "id",
+                                    "align": "left",
+                                },
+                                {
+                                    "name": "title",
+                                    "label": "名称",
+                                    "field": "title",
+                                    "align": "left",
+                                },
+                                {
+                                    "name": "type",
+                                    "label": "类型",
+                                    "field": "type",
+                                    "align": "left",
+                                },
+                                {
+                                    "name": "username",
+                                    "label": "用户名",
+                                    "field": "username",
+                                    "align": "left",
+                                },
+                            ],
+                            rows=chat_rows,
+                            pagination=10,
+                        ).classes("w-full").props("flat dense")
+                    else:
+                        ui.label("未找到最近聊天记录").classes(
+                            "text-gray-500 text-sm mt-2"
+                        )
 
     return refresh
 

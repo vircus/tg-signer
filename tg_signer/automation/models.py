@@ -3,9 +3,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from pyrogram.types import Message
+
+if TYPE_CHECKING:
+    from tg_signer.core import Client
+
+    from .engine import UserAutomation
 
 
 @dataclass
@@ -26,9 +31,9 @@ class AutomationContext:
 
     vars: Dict[str, Any]
     state: "RuleStateStore"
-    client: Any
+    client: "Client"
     logger: logging.Logger
-    worker: Any
+    worker: "UserAutomation"
     workdir: Path
 
     def log(self, msg: str, level: str = "INFO") -> None:

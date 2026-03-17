@@ -64,6 +64,7 @@ Commands:
   import                  Import config (default: stdin)
   list                    List existing configs
   list-members            List chat members (admin rights required for channels)
+  list-sign-records       List the most recent N check-in records
   list-topics             List group topic IDs (message_thread_id)
   list-schedule-messages  Show configured scheduled messages
   migrate-sign-records    Migrate check-in records from JSON to SQLite
@@ -85,6 +86,7 @@ Examples:
 tg-signer run
 tg-signer run my_sign  # Run 'my_sign' task without confirmation
 tg-signer run-once my_sign  # Run 'my_sign' task once
+tg-signer list-sign-records linuxdo -n 5  # Show the latest 5 records for task linuxdo
 tg-signer migrate-sign-records  # Migrate check-in records under .signer/signs to SQLite
 tg-signer send-text 8671234001 /test  # Send '/test' to chat_id '8671234001'
 tg-signer send-text --message-thread-id 1 -- -1003763902761 checkin  # Send to a group topic (message_thread_id=1)
@@ -375,4 +377,6 @@ Configs and data are stored in `.signer` by default. Running `tree .signer` show
 ```
 
 After migration, new check-in records are written only to `data.sqlite3`, while
-legacy `sign_record.json` remains readable.
+legacy `sign_record.json` remains readable. When a task runs and legacy JSON is
+detected, tg-signer will print a hint and try to import that task's history
+into SQLite automatically.

@@ -13,6 +13,16 @@ class SignRecordGroup:
 
 
 @dataclass
+class RecentSignRecord:
+    task_name: str
+    user_id: str
+    sign_date: str
+    signed_at: str
+    account: Optional[str]
+    source: str
+
+
+@dataclass
 class MigrationSummary:
     migrated_files: int = 0
     migrated_records: int = 0
@@ -193,6 +203,46 @@ class SignRecordStore:
         return [
             SignRecordGroup(task_name=task_name, user_id=user_id, records=records)
             for (task_name, user_id), records in grouped.items()
+        ]
+
+    def list_recent_records(
+        self,
+        limit: int = 10,
+        *,
+        task_name: str | None = None,
+        user_id: str | None = None,
+    ) -> list[RecentSignRecord]:
+        query = [
+            "SELECT task_name, user_id, sign_date, signed_at, account, source",
+            "FROM sign_records",
+        ]
+        conditions = []
+        params: list[object] = []
+        if task_name:
+            conditions.append("task_name = ?")
+            params.append(task_name)
+        if user_id:
+            conditions.append("user_id = ?")
+            params.append(user_id)
+        if conditions:
+            query.append("WHERE " + " AND ".join(conditions))
+        query.append("ORDER BY signed_at DESC, task_name ASC, user_id ASC")
+        query.append("LIMIT ?")
+        params.append(limit)
+
+        with self._connect() as conn:
+            rows = conn.execute("\n".join(query), params).fetchall()
+
+        return [
+            RecentSignRecord(
+                task_name=row["task_name"],
+                user_id=row["user_id"],
+                sign_date=row["sign_date"],
+                signed_at=row["signed_at"],
+                account=row["account"],
+                source=row["source"],
+            )
+            for row in rows
         ]
 
     @staticmethod

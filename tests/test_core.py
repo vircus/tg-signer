@@ -366,6 +366,30 @@ def test_user_signer_load_sign_record_migrates_legacy_json(signer_factory):
     assert signer.sign_record_store.load_records("linuxdo", "123456") == records
 
 
+def test_user_signer_load_sign_record_logs_migration_hint(monkeypatch, signer_factory):
+    signer = signer_factory(task_name="linuxdo")
+    signer.user = SimpleNamespace(id=123456)
+    legacy_record_file = signer.task_dir / "sign_record.json"
+    legacy_record_file.write_text(
+        json.dumps({"2026-03-17": "2026-03-17T06:00:00+08:00"}),
+        encoding="utf-8",
+    )
+    messages = []
+
+    def fake_log(message, level="INFO", **kwargs):
+        del kwargs
+        messages.append((level, message))
+
+    monkeypatch.setattr(signer, "log", fake_log)
+
+    signer.load_sign_record()
+
+    assert any(
+        level == "WARNING" and "migrate-sign-records" in message
+        for level, message in messages
+    )
+
+
 def test_user_signer_persist_sign_record_writes_sqlite_only_by_default(signer_factory):
     signer = signer_factory(task_name="linuxdo")
     signer.user = SimpleNamespace(id=123456)

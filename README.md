@@ -74,6 +74,7 @@ Commands:
   import                  导入配置，默认为从终端读取。
   list                    列出已有配置
   list-members            查询聊天（群或频道）的成员, 频道需要管理员权限
+  list-sign-records       列出最近N条签到记录
   list-topics             列出群组话题ID（message_thread_id）
   list-schedule-messages  显示已配置的定时消息
   llm-config              配置大模型API
@@ -99,6 +100,7 @@ Commands:
 tg-signer run
 tg-signer run my_sign  # 不询问，直接运行'my_sign'任务
 tg-signer run-once my_sign  # 直接运行一次'my_sign'任务
+tg-signer list-sign-records linuxdo -n 5  # 查看任务 linuxdo 最近 5 条签到记录
 tg-signer migrate-sign-records  # 将.signer/signs 下的签到记录迁移到 SQLite
 tg-signer send-text 8671234001 /test  # 向chat_id为'8671234001'的聊天发送'/test'文本
 tg-signer send-text --message-thread-id 1 -- -1003763902761 checkin  # 发送到群组话题(message_thread_id=1)
@@ -503,4 +505,5 @@ tg-signer monitor run my_monitor
 ```
 
 迁移到 SQLite 后，新的签到记录只写入 `data.sqlite3`，但仍兼容读取旧
-`sign_record.json`。
+`sign_record.json`。当运行任务时如果检测到旧 JSON，程序会输出提示并尝试将该任务
+的历史记录自动导入 SQLite。

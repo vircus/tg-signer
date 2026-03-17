@@ -190,6 +190,39 @@ def list_(obj):
     return UserSigner(workdir=obj["workdir"]).list_()
 
 
+@tg_signer.command(name="list-sign-records", help="列出最近N条签到记录")
+@click.argument("task_name", required=False)
+@click.option(
+    "--limit",
+    "-n",
+    default=10,
+    show_default=True,
+    type=int,
+    help="返回最近N条记录",
+)
+@click.option(
+    "--user-id",
+    "user_id",
+    default=None,
+    help="按 user_id 过滤",
+)
+@click.pass_obj
+def list_sign_records(obj, task_name: str | None, limit: int, user_id: str | None):
+    store = SignRecordStore(obj["workdir"])
+    records = store.list_recent_records(
+        limit=limit, task_name=task_name, user_id=user_id
+    )
+    if not records:
+        click.echo(
+            "暂无 SQLite 签到记录。若存在旧 sign_record.json，请先运行任务触发懒迁移或执行 `tg-signer migrate-sign-records`。"
+        )
+        return
+    for record in records:
+        click.echo(
+            f"{record.signed_at} | task={record.task_name} | user={record.user_id} | date={record.sign_date} | source={record.source}"
+        )
+
+
 @tg_signer.command(help="登录账号（用于获取session）")
 @click.option(
     "--num-of-dialogs",

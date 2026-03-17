@@ -64,6 +64,40 @@ def test_sign_record_store_runs_explicit_schema_migrations(tmp_path):
     assert count == 1
 
 
+def test_sign_record_store_lists_recent_records_with_filters(tmp_path):
+    workdir = tmp_path / ".signer"
+    store = SignRecordStore(workdir)
+    store.upsert_record(
+        "linuxdo",
+        "1001",
+        "2026-03-17",
+        "2026-03-17T06:00:00+08:00",
+    )
+    store.upsert_record(
+        "linuxdo",
+        "1001",
+        "2026-03-18",
+        "2026-03-18T06:00:00+08:00",
+    )
+    store.upsert_record(
+        "v2ex",
+        "2002",
+        "2026-03-16",
+        "2026-03-16T06:00:00+08:00",
+    )
+
+    recent = store.list_recent_records(limit=2)
+    assert [(record.task_name, record.sign_date) for record in recent] == [
+        ("linuxdo", "2026-03-18"),
+        ("linuxdo", "2026-03-17"),
+    ]
+
+    filtered = store.list_recent_records(limit=10, task_name="v2ex", user_id="2002")
+    assert [
+        (record.task_name, record.user_id, record.sign_date) for record in filtered
+    ] == [("v2ex", "2002", "2026-03-16")]
+
+
 def test_sign_record_store_migrates_legacy_json_with_explicit_user_id(tmp_path):
     workdir = tmp_path / ".signer"
     record_file = workdir / "signs" / "linuxdo" / "sign_record.json"

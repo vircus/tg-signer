@@ -28,3 +28,38 @@ def test_migrate_sign_records_command(tmp_path):
     assert "迁移文件数: 1" in result.output
     assert "迁移记录数: 1" in result.output
     assert (workdir / "data.sqlite3").is_file()
+
+
+def test_list_sign_records_command(tmp_path):
+    workdir = tmp_path / ".signer"
+    store = signer_cli.SignRecordStore(workdir)
+    store.upsert_record(
+        "linuxdo",
+        "123456",
+        "2026-03-17",
+        "2026-03-17T06:00:00+08:00",
+    )
+    store.upsert_record(
+        "linuxdo",
+        "123456",
+        "2026-03-18",
+        "2026-03-18T06:00:00+08:00",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        signer_cli.tg_signer,
+        [
+            "--workdir",
+            str(workdir),
+            "list-sign-records",
+            "linuxdo",
+            "--limit",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "2026-03-18T06:00:00+08:00" in result.output
+    assert "task=linuxdo" in result.output
+    assert "2026-03-17T06:00:00+08:00" not in result.output

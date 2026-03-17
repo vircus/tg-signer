@@ -906,18 +906,27 @@ class UserSigner(BaseUserWorker[SignConfigV3]):
         if not store.has_records(self.task_name, user_id):
             # Import legacy JSON lazily so existing workdirs keep working
             # without requiring an explicit migration step first.
-            store.import_json_file(
+            imported_paths = []
+            if store.import_json_file(
                 self.task_name,
                 user_id,
                 self.sign_record_file,
                 account=self._account,
-            )
-            store.import_json_file(
+            ):
+                imported_paths.append(self.sign_record_file)
+            if store.import_json_file(
                 self.task_name,
                 user_id,
                 self.legacy_sign_record_file,
                 account=self._account,
-            )
+            ):
+                imported_paths.append(self.legacy_sign_record_file)
+            if imported_paths:
+                joined_paths = ", ".join(str(path) for path in imported_paths)
+                self.log(
+                    f"检测到旧版签到记录文件，已自动导入 SQLite: {joined_paths}。建议执行 `tg-signer migrate-sign-records` 统一迁移历史记录。",
+                    level="WARNING",
+                )
         return store.load_records(self.task_name, user_id)
 
     def persist_sign_record(

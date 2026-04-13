@@ -402,6 +402,15 @@ tg-signer monitor run my_monitor
 
 ### 版本变动日志
 
+#### 0.8.6
+- 支持 Telegram 论坛群组话题 `message_thread_id`
+- 登录时可发现群组话题，新增 `list-topics` 用于查询话题 ID
+- `send-text`、`send-dice`、`schedule-messages`、签到配置与 WebUI 支持发送到指定话题
+- 签到记录迁移到 SQLite，新增 `list-sign-records` 与 `migrate-sign-records`
+- 兼容读取旧版 `sign_record.json`，运行任务时可自动导入历史记录
+- 发布官方 GHCR 镜像：`ghcr.io/amchii/tg-signer:<tag>` 与 `ghcr.io/amchii/tg-signer:<tag>-webui`
+- 改进论坛群组、频道私信等场景下的话题发现与消息发送兼容性
+
 #### 0.8.5
 - "kurigram>=2.2.19,<2.3.0"
 - 单账户多任务时进行并发请求限流

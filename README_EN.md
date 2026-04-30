@@ -297,7 +297,8 @@ Configure monitor item 2
 4. Only match messages from specific user IDs (comma-separated; press Enter to match all): 61244351
 5. Default text to send:
 6. Regex used to extract the text to send from the message: Participation keyword: 「(?P<keyword>(.*?))」\n
-7. Delete the sent message after N seconds (wait N seconds after sending before deleting; enter '0' for immediate deletion, or press Enter to keep it), N: 5
+7. Text template to send (supports {extracted}/{group1}/named groups; press Enter if not needed): Join {keyword}
+8. Delete the sent message after N seconds (wait N seconds after sending before deleting; enter '0' for immediate deletion, or press Enter to keep it), N: 5
 Continue configuring? (y/N): y
 
 Configure monitor item 3
@@ -349,9 +350,12 @@ Continue configuring? (y/N): n
       sent immediately whenever a message matches.
 
    6. You can extract outgoing text with a regex such as
-      `Participation keyword: 「(.*?)」\n`. Use parentheses `(...)` to capture the
-      text you want. That pattern can extract `I want to join` from the example
-      in step 3 and send it automatically.
+      `Participation keyword: 「(?P<keyword>.*?)」\n`. Use parentheses `(...)` to
+      capture the text you want. That pattern can extract `I want to join` from
+      the example in step 3 and send it automatically. If you configure a send
+      text template, use `{extracted}` or `{group1}` for the first capture group,
+      or a named group such as `{keyword}`. For example, `Join {keyword}` sends
+      `Join I want to join`.
 
 3. The `Message` structure looks like this:
 

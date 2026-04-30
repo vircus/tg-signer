@@ -1376,8 +1376,21 @@ class UserMonitor(BaseUserWorker[MonitorConfig]):
             send_text_search_regex = (
                 input_("从消息中提取发送文本的正则表达式（不需要则直接回车）: ") or None
             )
+        send_text_template = None
+        if send_text_search_regex:
+            send_text_template = (
+                input_(
+                    "发送文本模板（可用{extracted}/{group1}/命名分组；不需要则直接回车）: "
+                )
+                or None
+            )
 
-        if default_send_text or ai_reply or send_text_search_regex:
+        if (
+            default_send_text
+            or ai_reply
+            or send_text_search_regex
+            or send_text_template
+        ):
             delete_after = (
                 input_(
                     "发送消息后等待N秒进行删除（'0'表示立即删除, 不需要删除直接回车）， N: "
@@ -1389,8 +1402,11 @@ class UserMonitor(BaseUserWorker[MonitorConfig]):
             forward_to_chat_id = (
                 input_("转发消息到该聊天ID，默认为消息来源：")
             ).strip()
-            if forward_to_chat_id and not forward_to_chat_id.startswith("@"):
-                forward_to_chat_id = int(forward_to_chat_id)
+            if forward_to_chat_id:
+                if not forward_to_chat_id.startswith("@"):
+                    forward_to_chat_id = int(forward_to_chat_id)
+            else:
+                forward_to_chat_id = None
         else:
             delete_after = None
             forward_to_chat_id = None
@@ -1442,6 +1458,7 @@ class UserMonitor(BaseUserWorker[MonitorConfig]):
                 "ai_reply": ai_reply,
                 "ai_prompt": ai_prompt,
                 "send_text_search_regex": send_text_search_regex,
+                "send_text_template": send_text_template,
                 "delete_after": delete_after,
                 "forward_to_chat_id": forward_to_chat_id,
                 "push_via_server_chan": push_via_server_chan,
@@ -1551,7 +1568,7 @@ class UserMonitor(BaseUserWorker[MonitorConfig]):
                             f"匹配到监控项：{match_cfg.chat_id}",
                             f"消息内容为:\n\n{message.text}",
                         )
-            except IndexError as e:
+            except (IndexError, ValueError) as e:
                 logger.exception(e)
 
     async def get_send_text(self, match_cfg: MatchConfig, message: Message) -> str:
